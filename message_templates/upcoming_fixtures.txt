@@ -1,0 +1,6 @@
+[NAME]'s Predictions
+
+GW: [GW]
+Deadline: [DEADLINE] (1h before kick-off)
+
+Fixtures:
