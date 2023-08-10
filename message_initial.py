@@ -1,3 +1,7 @@
+### PL Fixtures
+### DB Insert
+### Send Prediction Template
+
 import configparser
 from event import Event
 from premier_league import PL
@@ -78,6 +82,7 @@ class InitialMessage(Event):
         # Send Messages
         for participant in participants:
 
+            print(f"Participant: {participant['participant_id']}")
             to_name = participant['first_name']
             to_number = participant['phone']
 

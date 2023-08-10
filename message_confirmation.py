@@ -1,3 +1,8 @@
+### Triggered upon Message Reception (API Gateway, AWS Lambda)
+### Authenticate Message
+### DB Insert
+### Send Confirmation Message
+
 import os
 import sys
 from datetime import datetime
@@ -40,7 +45,7 @@ class ConfirmationMessage(Event):
                 # if admin sender, treat as prediction on behalf of name_from_message (if valid)
                 query = (f"SELECT * FROM participants WHERE first_name='{name_from_message}';")
                 proxy_participant = self.read_query(query)
-                
+
                 if len(proxy_participant)!=0:
                     # replace admin phone number to participant being represented
                     self.participant_phone = proxy_participant[0]['phone']
