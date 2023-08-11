@@ -65,13 +65,13 @@ class CummulativeMessage(Event):
     
     def send_cummulative(self, message_body):
 
-        # only send to admins
-        query = ("SELECT * FROM participants WHERE admin=1;")
-        admins = self.read_query(query)
+        # only send to admins?
+        query = ("SELECT * FROM participants;")
+        participants = self.read_query(query)
 
-        for a in admins:
+        for p in participants:
             # message too long - send in parts?
-            self.send_message(a['phone'], message_body)
+            self.send_message(p['phone'], message_body)
 
 
 if __name__ == "__main__":
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     Action = CummulativeMessage()
     gw, hrs_past_deadline = Action.get_curr_gw()
 
-    # even if hrs_past_deadline < 0 (before deadline)
-    if hrs_past_deadline <= send_within_hrs_after_deadline:
+    # after deadline and before deadline + hrs_past_deadline
+    if 0 <= hrs_past_deadline <= send_within_hrs_after_deadline:
         message_body = Action.get_cummulative_predictions(gw)
         Action.send_cummulative(message_body)
 
