@@ -70,7 +70,7 @@ class CummulativeMessage(Event):
         participants = self.read_query(query)
 
         for p in participants:
-            # message too long - send in parts?
+            print(p['first_name'])
             self.send_message(p['phone'], message_body)
 
 
