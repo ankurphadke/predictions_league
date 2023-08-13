@@ -1,7 +1,11 @@
+### Execute after deadline has passed
+### Schedule when prediction messages sent
+
 ### Cummulate Predictions
 ### Send to Admins
 
 import configparser
+import sys
 from datetime import datetime, timezone
 
 from event import Event
@@ -9,8 +13,6 @@ from event import Event
 parser = configparser.ConfigParser()
 parser.optionxform = str
 parser.read('params.cfg')
-
-send_within_hrs_after_deadline=int(parser.get('rules','send_within_hrs_after_deadline'))
 
 class CummulativeMessage(Event):
 
@@ -77,10 +79,15 @@ class CummulativeMessage(Event):
 if __name__ == "__main__":
     
     Action = CummulativeMessage()
-    gw, hrs_past_deadline = Action.get_curr_gw()
+    # from mysql fixtures, get latest gw
+    # if a fixture is in this table, prediction messages for this fixture have been sent
+    gw_db, hrs_past_deadline = Action.get_curr_gw()
+    # Provide gw as a command argument instead?
 
-    # after deadline and before deadline + hrs_past_deadline
-    if 0 <= hrs_past_deadline <= send_within_hrs_after_deadline:
+    # confirm that it's the same gw
+    gw_arg = int(sys.argv[1])
+    # ensure that deadline has passed
+    if gw_arg==gw_db and 0 <= hrs_past_deadline:
         message_body = Action.get_cummulative_predictions(gw)
         Action.send_cummulative(message_body)
 
