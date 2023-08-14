@@ -1,5 +1,6 @@
 Hi [NAME]!
-Premier League GW [GW] has come to an end! Here are your scores for the Prediction League:
+Premier League GW [GW] has come to an end! Here's how you did in the Footy Mates Prediction League:
 
-Correct Outcome: 1
-Correct Score: 2
+Scoring:
+- Correct Outcome: 1 point
+- Correct Score: 2 points
