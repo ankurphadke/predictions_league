@@ -2,6 +2,7 @@
 ### Compute Scores
 ### DB Insert
 ### Send Summary Message
+### Update Leaderboard
 
 import sys
 import configparser
@@ -23,9 +24,9 @@ class FinalMessage(Event):
 
         super().__init__()
         self.gw = gw
-        self.results = {}
-        self.scores = {}
-        self.summary = {}
+        self.results = None
+        self.scores = None
+        self.summary = None
 
     
     def get_results(self):
@@ -101,7 +102,6 @@ class FinalMessage(Event):
                 correct_score = True
                 points += 2
             
-
             p['correct_outcome'] = correct_outcome
             p['correct_score'] = correct_score
             p['points'] = points
