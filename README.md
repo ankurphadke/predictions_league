@@ -5,10 +5,10 @@
 - Prediction Message Authentication
 - Confirmation Message
 - Proxy Predictions
-
-## Next Steps
-
 - Scoring points
 - Leaderboard Update
 - Summary Message
+
+## Next Steps
+
 - Scheduling
