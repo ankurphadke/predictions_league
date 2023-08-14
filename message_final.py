@@ -48,8 +48,10 @@ class FinalMessage(Event):
             raise Exception(f"Inconsistency between Fixtures and Results: GW {self.gw}")
 
         # ensure all matches finished
+        # 'finished_provisional' tag vs 'finished' tag
+        # 'finished_provisional' updated first, assuming match score doesn't change later, only fpl assists/bps/etc
         for r in self.results:
-            if r['finished']==False:
+            if r['finished_provisional']==False:
                 raise Exception(f"Match Incomplete: GW {self.gw}, Fixture {r['fixture_id']}")
 
     

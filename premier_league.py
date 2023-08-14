@@ -47,6 +47,7 @@ class PL:
                             'gw': gw, 
                             'kickoff_time': str(datetime.strptime(f['kickoff_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc))[:16], 
                             'finished': f['finished'], 
+                            'finished_provisional': f['finished_provisional'], 
                             'team_h': f['team_h'], 
                             'team_a': f['team_a'],
                             'team_h_score': f['team_h_score'], 
