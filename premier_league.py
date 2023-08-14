@@ -35,6 +35,24 @@ class PL:
                             'team_a': f['team_a']} for f in fixtures_full]
 
         return fixtures_short
+    
+
+    def get_results(self, gw):
+
+        filters = f'?event={gw}'
+        results_full = requests.get(self.base_url + self.fixture_path + filters).json()
+
+        # select attributes
+        results_short = [{'fixture_id': f['code'], 
+                            'gw': gw, 
+                            'kickoff_time': str(datetime.strptime(f['kickoff_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc))[:16], 
+                            'finished': f['finished'], 
+                            'team_h': f['team_h'], 
+                            'team_a': f['team_a'],
+                            'team_h_score': f['team_h_score'], 
+                            'team_a_score': f['team_a_score']} for f in results_full]
+
+        return results_short
          
 
     def get_upcoming_fixtures(self, send_hrs_prior_deadline):
