@@ -12,3 +12,7 @@
 ## Next Steps
 
 - Scheduling
+
+## Other
+
+- GW 1 Complete - No problems
