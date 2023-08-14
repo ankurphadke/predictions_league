@@ -82,6 +82,7 @@ TABLES['leaderboard'] = (
     "  `correct_outcomes` int(8) NOT NULL,"
     "  `correct_scores` int(8) NOT NULL,"
     "  `total_points` int(8) NOT NULL,"
+    "  `last_update_gw` int(4) NOT NULL,"
     "  PRIMARY KEY (`participant_id`),"
     "  FOREIGN KEY (`participant_id`) REFERENCES `participants` (`participant_id`)"
     ")")
