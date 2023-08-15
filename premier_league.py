@@ -74,7 +74,7 @@ class PL:
             hrs_to_deadline = (deadline_time - current_utc_time).total_seconds() / 3600
 
             # if nearing deadline, return upcoming fixtures
-            if hrs_to_deadline <= send_hrs_prior_deadline:
+            if 0 < hrs_to_deadline <= send_hrs_prior_deadline:
                 
                 gw = gw_info['id']
                 
@@ -87,5 +87,4 @@ class PL:
                 
                 # ignore future gws, next deadline will not be within 24 hrs (script schedule)
 
-            else:
-                return None
+        return None

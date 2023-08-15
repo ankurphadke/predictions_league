@@ -107,5 +107,10 @@ if __name__ == "__main__":
         # send message
         Action.send_fixtures_message()
 
-        # schedule jobs for receiving messages, scoring, summary message etc
-        # trigger via Cloudwatch
+    else:
+
+        print(f'No deadline coming up in the next {send_hrs_prior_deadline} hrs')
+
+    
+    # schedule jobs for receiving messages, scoring, summary message etc
+    # trigger via Cloudwatch
