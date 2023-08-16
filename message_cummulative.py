@@ -90,5 +90,7 @@ if __name__ == "__main__":
     if gw_arg==gw_db and 0 <= hrs_past_deadline:
         message_body = Action.get_cummulative_predictions(gw)
         Action.send_cummulative(message_body)
+    else:
+        print(f"Deadline for GW {gw_arg} hasn't yet passed")
 
     
