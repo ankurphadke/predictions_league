@@ -87,4 +87,9 @@ class PL:
                 
                 # ignore future gws, next deadline will not be within 24 hrs (script schedule)
 
+            elif 0 < hrs_to_deadline:
+
+                print(f"Next deadline: GW {gw_info['id']} - {str(deadline_time)[:19]} - {round(hrs_to_deadline,1)} hrs to go")
+                break
+
         return None

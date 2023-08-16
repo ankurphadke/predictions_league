@@ -99,8 +99,11 @@ if __name__ == "__main__":
     
     Action = InitialMessage()
     
-    # if there is an upcoming gameweek, and message hasn't already been sent
-    if Action.gw_soon and not Action.message_sent_prior:
+    if Action.gw_soon and Action.message_sent_prior:
+
+        print(f"Prediction Template for GW {self.gw} already sent")
+
+    elif Action.gw_soon and not Action.message_sent_prior:
         
         # insert fixtures - mysql
         Action.insert_fixtures()        
