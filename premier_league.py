@@ -73,23 +73,24 @@ class PL:
             # calculate the time to deadline
             hrs_to_deadline = (deadline_time - current_utc_time).total_seconds() / 3600
 
+            # if in the past, skip
+            if 0 < hrs_to_deadline:
+                print(f"Next deadline: GW {gw_info['id']} - {str(deadline_time)[:19]} - {round(hrs_to_deadline,1)} hrs to go")
+            else:
+                continue
+
             # if nearing deadline, return upcoming fixtures
-            if 0 < hrs_to_deadline <= send_hrs_prior_deadline:
-                
-                gw = gw_info['id']
-                
+            # else, break
+            if 0 < hrs_to_deadline <= send_hrs_prior_deadline:                
+                gw = gw_info['id']                
                 # get fixtures
                 fixtures = self.get_fixtures(gw)
                 for f in fixtures:
                     f['gw_deadline_time'] = prediction_deadline
 
-                return gw, friendly_deadline, fixtures
-                
+                return gw, friendly_deadline, fixtures                
                 # ignore future gws, next deadline will not be within 24 hrs (script schedule)
-
-            elif 0 < hrs_to_deadline:
-
-                print(f"Next deadline: GW {gw_info['id']} - {str(deadline_time)[:19]} - {round(hrs_to_deadline,1)} hrs to go")
+            else:                
                 break
 
         return None

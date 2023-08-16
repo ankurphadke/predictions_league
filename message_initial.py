@@ -101,7 +101,7 @@ if __name__ == "__main__":
     
     if Action.gw_soon and Action.message_sent_prior:
 
-        print(f"Prediction Template for GW {self.gw} already sent")
+        print(f"Prediction Template for GW {Action.gw} already sent")
 
     elif Action.gw_soon and not Action.message_sent_prior:
         
