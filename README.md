@@ -12,6 +12,8 @@
 ## Next Steps
 
 - Scheduling
+- Participant Leagues
+- Predictions for other tournaments/sports
 
 ## Other
 
