@@ -45,7 +45,8 @@ class CummulativeMessage(Event):
                  "ON f.team_h=t1.team_id "
                  "LEFT JOIN teams t2 "
                  "ON f.team_a=t2.team_id "
-                 f"WHERE f.gw={gw};")
+                 f"WHERE f.gw={gw} "
+                 "ORDER BY f.kickoff_time;")
         fixtures = self.read_query(query)
 
         query = (f"SELECT f.fixture_id, p.participant_id, pr.first_name, p.team_h_pred, p.team_a_pred "
