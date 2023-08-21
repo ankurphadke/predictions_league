@@ -27,6 +27,14 @@ class FinalMessage(Event):
         self.results = None
         self.scores = None
         self.summary = None
+        self.repeat = False
+
+        # avoid double update
+        query = (f"SELECT MAX(last_update_gw) as last FROM leaderboard;")
+        last_update_gw = self.read_query(query)[0]['last']
+
+        if self.gw<=last_update_gw:
+            self.repeat = True
 
     
     def get_results(self):
@@ -82,7 +90,8 @@ class FinalMessage(Event):
                  "LEFT JOIN predictions p ON f.fixture_id=p.fixture_id "
                  "LEFT JOIN results r ON f.fixture_id=r.fixture_id "
                  "LEFT JOIN teams th ON f.team_h=th.team_id "
-                 "LEFT JOIN teams ta ON f.team_a=ta.team_id;")
+                 "LEFT JOIN teams ta ON f.team_a=ta.team_id "
+                 f"WHERE gw={self.gw};")
         scores = self.read_query(query)
 
         # compute scores
@@ -250,8 +259,7 @@ class FinalMessage(Event):
         query = ("SELECT * FROM participants")
         participants = self.read_query(query)
 
-        for p in participants:
-        
+        for p in participants:        
             self.send_message(p['phone'], message_body)
 
 
@@ -260,6 +268,8 @@ if __name__ == "__main__":
     gw = int(sys.argv[1])
     
     Action = FinalMessage(gw)
+    if Action.repeat:
+        raise Exception(f"GW {Action.gw} results already updated")
 
     Action.get_results()
     Action.authenticate_results()
