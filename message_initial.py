@@ -99,19 +99,17 @@ if __name__ == "__main__":
     
     Action = InitialMessage()
     
-    if Action.gw_soon and Action.message_sent_prior:
+    if Action.gw_soon:        
+        if Action.message_sent_prior:
+            print(f"Prediction Template for GW {Action.gw} already sent")
 
-        print(f"Prediction Template for GW {Action.gw} already sent")
-
-    elif Action.gw_soon and not Action.message_sent_prior:
-        
-        # insert fixtures - mysql
-        Action.insert_fixtures()        
-        # send message
-        Action.send_fixtures_message()
+        else:
+            # insert fixtures - mysql
+            Action.insert_fixtures()        
+            # send message
+            Action.send_fixtures_message()
 
     else:
-
         print(f'No deadline coming up in the next {send_hrs_prior_deadline} hrs')
 
     

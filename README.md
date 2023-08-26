@@ -9,6 +9,14 @@
 - Leaderboard Update
 - Summary Message
 
+## Optimization
+
+- Optimize number of segments per message
+- prediction compilation only to admin
+- score breakdown not required
+
+- minimize db calls
+
 ## Next Steps
 
 - Scheduling
@@ -18,3 +26,4 @@
 ## Other
 
 - GW 1 Complete - No problems
+

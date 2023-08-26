@@ -72,8 +72,8 @@ class CummulativeMessage(Event):
     
     def send_cummulative(self, message_body):
 
-        # only send to admins?
-        query = ("SELECT * FROM participants;")
+        # only send to admins
+        query = ("SELECT * FROM participants WHERE admin=1;")
         participants = self.read_query(query)
 
         # # separate message body into multiple messages due to Twilio char limit
