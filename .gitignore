@@ -1,0 +1,4 @@
+__pycache__/
+db_setup/participants.json
+params.cfg
+other/

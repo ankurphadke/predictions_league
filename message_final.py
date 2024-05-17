@@ -192,7 +192,8 @@ class FinalMessage(Event):
             summary.append(participant_summary)
 
             # send message
-            self.send_message(p['phone'], message_body)
+            # too expensive
+            # self.send_message(p['phone'], message_body)
 
         self.summary = summary
 
@@ -256,7 +257,9 @@ class FinalMessage(Event):
             message_body += "\n"
             message_body += f"{rank}. {l['first_name']} - {l['total_points']} - ({l['correct_outcomes']}, {l['correct_scores']})"
 
-        query = ("SELECT * FROM participants")
+
+        query = ("SELECT * FROM participants WHERE admin=1;")
+        # query = ("SELECT * FROM participants") # save costs
         participants = self.read_query(query)
 
         for p in participants:        
