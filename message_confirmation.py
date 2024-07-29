@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 
 from event import Event
-from premier_league import PL
+from predictions_league.PremierLeagueLib import PL
 
 
 class ConfirmationMessage(Event):

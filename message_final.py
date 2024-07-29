@@ -9,7 +9,7 @@ import configparser
 import numpy as np
 
 from event import Event
-from premier_league import PL
+from predictions_league.PremierLeagueLib import PL
 
 parser = configparser.ConfigParser()
 parser.optionxform = str
