@@ -99,5 +99,5 @@ VALUES
 
 INSERT INTO user (id, first_name, last_name, email, admin)
 VALUES
-    (1, "Ankur", "Phadke", "ankurphadke@gmail.com", 1),
-    (2, "test", "user", "ankur.phadke90@gmail.com", 0);
+    (1, "A", "P", "a@gmail.com", 1),
+    (2, "test", "user", "b@gmail.com", 0);
