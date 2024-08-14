@@ -5,7 +5,7 @@ This is a tailor-made application used to orchestrate a Premier League predictio
 The first version (PL 2023/2024) of this app was hosted on an AWS EC2 instance, and made use of a lambda function to handle prediction updates in a synchronous manner. A SQL database was hosted on AWS RDS. Twilio SMS API was used for communication.
 
 ## v2
-For the 2024/2025 season, we are moving over to using an email interface for updates, and Google Forms for user input. This allows us to make use of Google Forms' data storage capabilities, meaning that we only need to poll for predictions at the end of a prediction period. We notify participants through the Gmail API. This brings down the required compute to a singly python script that handles all these tasks for a single gameweek. A local MySQL instance is being used for data storage.
+For the 2024/2025 season, we have decided to go ahead with an email interface for updates, and Google Forms for user input. This allows us to make use of Google Forms' data storage capabilities, meaning that we only need to poll for predictions at the end of a prediction period. We notify participants through the Gmail API. This brings down the required compute to a single python script being run each week. It handles all the required tasks for a given gameweek. A local MySQL instance is being used for storing all the data.
 
 ## Post-setup
 - `mysql < database/schema.sql` to create the MySQL database and associated tables.
