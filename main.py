@@ -11,7 +11,7 @@ config.read( "params.cfg" )
 
 CORRECT_GD_PTS = 1
 CORRECT_OUTCOME_PTS = 1
-CORRECT_SCORE_PTS = 1
+CORRECT_SCORE_PTS = 2
 FROM_EMAIL = config[ "email" ][ "from_address" ]
 TIME_HORIZON = 96
 
