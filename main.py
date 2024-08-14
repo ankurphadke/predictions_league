@@ -13,7 +13,7 @@ CORRECT_GD_PTS = 1
 CORRECT_OUTCOME_PTS = 1
 CORRECT_SCORE_PTS = 1
 FROM_EMAIL = config[ "email" ][ "from_address" ]
-TIME_HORIZON = 144
+TIME_HORIZON = 96
 
 class FormError( Exception ):
     pass
