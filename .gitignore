@@ -6,6 +6,7 @@ include/
 lib/
 predictions_league/
 client_secrets.json
+params.cfg
 pyvenv.cfg
 token_form.json
 token_mail.json

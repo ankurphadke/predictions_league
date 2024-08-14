@@ -1,3 +1,4 @@
+import configparser
 from datetime import datetime, timezone, timedelta
 
 import DatabaseLib as DB
@@ -5,10 +6,13 @@ import EmailLib as Email
 import FormLib as Form
 import PremierLeagueLib as PL
 
+config = configparser.ConfigParser()
+config.read( "params.cfg" )
+
 CORRECT_GD_PTS = 1
 CORRECT_OUTCOME_PTS = 1
 CORRECT_SCORE_PTS = 1
-FROM_EMAIL = "footymates21@gmail.com"
+FROM_EMAIL = config[ "email" ][ "from_address" ]
 TIME_HORIZON = 144
 
 class FormError( Exception ):
