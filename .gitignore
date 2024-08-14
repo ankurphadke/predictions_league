@@ -1,4 +1,12 @@
+.DS_Store
 __pycache__/
-db_setup/participants.json
-params.cfg
-other/
+bin/
+database/data.sql
+include/
+lib/
+predictions_league/
+client_secrets.json
+pyvenv.cfg
+token_form.json
+token_mail.json
+token_response.json

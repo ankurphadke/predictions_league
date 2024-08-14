@@ -20,16 +20,30 @@ CREATE TABLE team (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE gameweek (
+    id int(8) NOT NULL,
+    deadline_time varchar(32) NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TABLE fixture (
     id int(32) NOT NULL,
     gw int(8) NOT NULL,
-    gw_deadline_time varchar(32) NOT NULL,
     kickoff_time varchar(32) NOT NULL,
     team_h int(8) NOT NULL,
     team_a int(8) NOT NULL,
     PRIMARY KEY (id),
+    FOREIGN KEY (gw) REFERENCES gameweek (id),
     FOREIGN KEY (team_h) REFERENCES team (id),
     FOREIGN KEY (team_a) REFERENCES team (id)
+);
+
+CREATE TABLE form (
+    id varchar(256) NOT NULL,
+    gw int(8) NOT NULL,
+    responder_uri varchar(512),
+    PRIMARY KEY (id),
+    FOREIGN KEY (gw) REFERENCES gameweek (id)
 );
 
 CREATE TABLE prediction (
@@ -51,19 +65,26 @@ CREATE TABLE result (
     FOREIGN KEY (fixture_id) REFERENCES fixture (id)
 );
 
-CREATE TABLE score (
+CREATE TABLE fixture_score (
     user_id int(32) NOT NULL,
     fixture_id int(32) NOT NULL,
-    correct_h_score BIT NOT NULL,
-    correct_a_score BIT NOT NULL,
     correct_score BIT NOT NULL,
     correct_outcome BIT NOT NULL,
-    correct_gd_to_zero BIT NOT NULL,
-    correct_gd_to_one BIT NOT NULL,
+    correct_gd BIT NOT NULL,
     points int(8) NOT NULL,
     PRIMARY KEY (user_id, fixture_id),
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (fixture_id) REFERENCES fixture (id)
+);
+
+CREATE TABLE gameweek_score (
+    user_id int(32) NOT NULL,
+    gw int(8) NOT NULL,
+    missed_gw BIT NOT NULL,
+    total_points int(8) NOT NULL,
+    PRIMARY KEY (user_id, gw),
+    FOREIGN KEY (user_id) REFERENCES user (id),
+    FOREIGN KEY (gw) REFERENCES gameweek (id)
 );
 
 CREATE TABLE leaderboard (
@@ -73,31 +94,3 @@ CREATE TABLE leaderboard (
     PRIMARY KEY (user_id),
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
-
-INSERT INTO team (id, name)
-VALUES
-    (1, "ARS"),
-    (2, "AVL"),
-    (3, "BOU"),
-    (4, "BRE"),
-    (5, "BHA"),
-    (6, "CHE"),
-    (7, "CRY"),
-    (8, "EVE"),
-    (9, "FUL"),
-    (10, "IPS"),
-    (11, "LEI"),
-    (12, "LIV"),
-    (13, "MCI"),
-    (14, "MUN"),
-    (15, "NEW"),
-    (16, "NFO"),
-    (17, "SOU"),
-    (18, "TOT"),
-    (19, "WHU"),
-    (20, "WOL");
-
-INSERT INTO user (id, first_name, last_name, email, admin)
-VALUES
-    (1, "A", "P", "a@gmail.com", 1),
-    (2, "test", "user", "b@gmail.com", 0);
