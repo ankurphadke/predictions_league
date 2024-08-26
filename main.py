@@ -224,7 +224,8 @@ def score_responses( gw, result_data, prediction_data ):
     DB.write_insert( 'gameweek_score', gameweek_score_data )
     return gameweek_score_data
 
-def update_leaderboard( gw, gameweek_score_data ):
+def update_leaderboard( gw, users, gameweek_score_data ):
+    users_dict = { u[ "id" ]: u[ "first_name" ] for u in users }
     query = f"SELECT * FROM leaderboard;"
     leaderboard_data = DB.read_query(query)
     gameweek_scores = {
@@ -250,7 +251,63 @@ def update_leaderboard( gw, gameweek_score_data ):
             gameweek_scores[ row[ "user_id" ] ][ "total_points" ]
         row[ "gw" ] = gameweek_scores[ row[ "user_id" ] ][ "gw" ]
     DB.write_insert( 'leaderboard', leaderboard_data, replace=True )
-    return leaderboard_data
+    leaderboard = [
+        {
+            "Name": users_dict[ row[ "user_id" ] ],
+            "Total Points": row[ "total_points" ]
+        }
+        for row in leaderboard_data
+    ]
+    leaderboard_df = pd.DataFrame( leaderboard )
+    leaderboard_df = leaderboard_df.set_index( "Name" )
+    leaderboard_df = leaderboard_df.sort_values( by="Total Points",
+                                                 ascending=False )
+    return leaderboard_df.to_html()
+
+def summarize_results( gw, users, teams, result_data, prediction_data,
+                       gameweek_score_data ):
+    if len( users ) == 0:
+        raise EmailError( ( f"No users registered for predictions league" ) )
+    query = f"SELECT * FROM fixture WHERE gw={ gw }"
+    fixtures = DB.read_query(query)
+    users_dict = { u[ "id" ]: u[ "first_name" ] for u in users }
+    fixtures_dict = { f[ "id" ]: \
+                        f"{ teams[ f[ "team_h" ] ] }-{ teams[ f[ "team_a" ] ] }"
+                      for f in fixtures }
+    results_dict = { r[ "fixture_id" ]: \
+                        f"{ r[ "team_h_score" ] }-{ r[ "team_a_score" ] }"
+                     for r in result_data }
+
+    predictions = {
+        u[ "first_name" ]: {
+            fixtures_dict[ f[ "id" ] ]: ""
+            for f in fixtures
+        }
+        for u in users
+    }
+    assert len( users )==len( gameweek_score_data )
+    for gs in gameweek_score_data:
+        predictions[ users_dict[ gs[ "user_id" ] ] ][ "Total Points" ] = \
+            gs[ "total_points" ]
+    predictions[ "Result" ] = {
+        fixtures_dict[ f[ "id" ] ]: results_dict[ f[ "id" ] ]
+        for f in fixtures
+    }
+    predictions[ "Result" ][ "Total Points" ] = ""
+    for p in prediction_data:
+        first_name = users_dict[ p[ "user_id" ] ]
+        fixture_title = fixtures_dict[ p[ "fixture_id" ] ]
+        assert first_name in predictions
+        assert fixture_title in predictions[ first_name ]
+        predictions[ first_name ][ fixture_title ] = \
+            f"{ p[ "team_h_pred" ] }-{ p[ "team_a_pred" ] }"
+    predictions_df = pd.DataFrame( predictions )
+
+    col_to_move = "Result"
+    new_columns = [ col_to_move ] + \
+        [ col for col in predictions_df.columns if col != col_to_move ]
+    predictions_df = predictions_df[ new_columns ]
+    return predictions_df.to_html()
 
 def get_form( gw, deadline, fixtures ):
     query = f"SELECT * FROM form WHERE gw={ gw };"
@@ -283,49 +340,8 @@ def get_form( gw, deadline, fixtures ):
     DB.write_insert( 'form', form_data )
     return form_id, responder_uri
 
-def summarize_results( gw, users, teams, result_data, prediction_data,
-                       gameweek_score_data ):
-    if len( users ) == 0:
-        raise EmailError( ( f"No users registered for predictions league" ) )
-    query = f"SELECT * FROM fixture WHERE gw={ gw }"
-    fixtures = DB.read_query(query)
-    users_dict = { u[ "id" ]: u[ "first_name" ] for u in users }
-    fixtures_dict = { f[ "id" ]: \
-                        f"{ teams[ f[ "team_h" ] ] }-{ teams[ f[ "team_a" ] ] }"
-                      for f in fixtures }
-    results_dict = { r[ "fixture_id" ]: \
-                        f"{ r[ "team_h_score" ] }-{ r[ "team_a_score" ] }"
-                     for r in result_data }
-
-    summary = {
-        u[ "first_name" ]: {
-            fixtures_dict[ f[ "id" ] ]: ""
-            for f in fixtures
-        }
-        for u in users
-    }
-    assert len( users )==len( gameweek_score_data )
-    for gs in gameweek_score_data:
-        summary[ users_dict[ gs[ "user_id" ] ] ][ "Total Points" ] = \
-            gs[ "total_points" ]
-    summary[ "Result" ] = {
-        fixtures_dict[ f[ "id" ] ]: results_dict[ f[ "id" ] ]
-        for f in fixtures
-    }
-    summary[ "Result" ][ "Total Points" ] = ""
-    for p in prediction_data:
-        first_name = users_dict[ p[ "user_id" ] ]
-        fixture_title = fixtures_dict[ p[ "fixture_id" ] ]
-        assert first_name in summary
-        assert fixture_title in summary[ first_name ]
-        summary[ first_name ][ fixture_title ] = \
-            f"{ p[ "team_h_pred" ] }-{ p[ "team_a_pred" ] }"
-
-    results_summary = pd.DataFrame( summary )
-    return results_summary
-
-def draft_email( users, gw, deadline, responder_uri, results_summary,
-                 leaderboard_data ):
+def draft_email( users, gw, deadline, responder_uri, predictions_df,
+                 leaderboard_df ):
     if len( users ) == 0:
         raise EmailError( ( f"No users registered for predictions league" ) )
 
@@ -333,42 +349,42 @@ def draft_email( users, gw, deadline, responder_uri, results_summary,
     from_address = FROM_EMAIL
     subject = f"Footy Mates PL Predictions - GW { gw }"
     body = (
-        "Hi all,\n\n"
-        f"Kindly submit your predictions for Premier League GW { gw }.\n\n"
-        f"Submission deadline: { deadline } UTC.\n"
-        f"Google Form: { responder_uri }\n\n"
+        "<html>"
+        "<body>"
+        f"<h2>Premier League GW { gw } is almost here!</h2>"
+        "<p>Kindly submit your predictions for the Footy Mates prediction "
+        "league</p>"
+        "<ul>"
+        f"<li>Submission deadline: <b>{ deadline } UTC</b></li>"
+        f"<li>Google Form: <b>{ responder_uri }</b></li>"
+        "</ul>"
+        "<p><b>Scoring (cummulative):</b></p>"
+        "<ul>"
+        f"<li>Correct outcome: 1 pt</li>"
+        f"<li>Correct goal difference: 1 pt</li>"
+        f"<li>Correct score: 2 pts</li>"
+        "</ul>"
+        "<p>Note: If a participant fails to submit their predictions, their "
+        "score will be computed using the minimum score across the league in "
+        "the given week.</p>"
         "Good luck!"
     )
 
-    if results_summary is not None:
+    if predictions_df:
         body += str(
-            "\n\n"
-            f"GW { gw } Predictions:\n"
-            f"{ results_summary.to_string(index=False) }"
+            f"<h3>GW { gw-1 } Prediction Results:</h3>"
+            f"{ predictions_df }"
+        )
+    if leaderboard_df:
+        body += str(
+            f"<h3>Leaderboard:</h3>"
+            f"{ leaderboard_df }"
         )
 
-    if leaderboard_data:
-        user_first_names = {
-            u[ "id" ]: u[ "first_name" ]
-            for u in users
-        }
-        leaderboard_data.sort( key = lambda x: x[ "total_points" ],
-                               reverse=True )
-        leaderboard = ""
-        position = 0
-        for lr in leaderboard_data:
-            position += 1
-            user_position = str(
-                f"\t{ position }. "
-                f"{ user_first_names[ lr[ "user_id" ] ] } "
-                f"- { lr[ "total_points" ] } pts"
-            )
-            leaderboard += user_position + "\n"
-        body += str(
-            "\n\n"
-            f"Points table after GW { gw - 1 }:\n"
-            f"{ leaderboard }"
-        )
+    body += str(
+        "</body>"
+        "</html>"
+    )
     return to_addresses, from_address, subject, body
 
 if __name__ == "__main__":
@@ -379,7 +395,7 @@ if __name__ == "__main__":
     users = DB.read_query(query)
     query = f"SELECT * FROM team;"
     teams = { t[ "id" ]: t[ "name" ] for t in DB.read_query(query) }
-    prediction_data, gameweek_score_data, leaderboard_data, results_summary = \
+    prediction_data, gameweek_score_data, leaderboard_df, predictions_df = \
         None, None, None, None
 
     if gw > 1:
@@ -387,10 +403,11 @@ if __name__ == "__main__":
         prediction_data = process_responses( gw-1 )
         gameweek_score_data = score_responses( gw-1, result_data,
                                                prediction_data )
-        leaderboard_data = update_leaderboard( gw-1, gameweek_score_data )
-        results_summary = summarize_results( gw-1, users, teams, result_data,
-                                             prediction_data,
+        leaderboard_df = update_leaderboard( gw-1, users,
                                              gameweek_score_data )
+        predictions_df = summarize_results( gw-1, users, teams, result_data,
+                                            prediction_data,
+                                            gameweek_score_data )
 
     gameweek_data = [ {
         "id":               gw,
@@ -403,6 +420,7 @@ if __name__ == "__main__":
     print( f"\nPrediction Form: { responder_uri }\n" )
 
     to_addresses, from_address, subject, body = \
-        draft_email( users, gw, deadline, responder_uri, results_summary,
-                     leaderboard_data )
-    Email.send_email( to_addresses, from_address, subject, body )
+        draft_email( users, gw, deadline, responder_uri, predictions_df,
+                     leaderboard_df )
+
+    Email.send_email( to_addresses, from_address, subject, body, is_html=True )

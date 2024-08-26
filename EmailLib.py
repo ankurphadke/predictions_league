@@ -9,11 +9,11 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/gmail.compose"]
+SCOPES = [ "https://www.googleapis.com/auth/gmail.compose" ]
 CLIENT_SECRETS = "client_secrets.json"
 TOKENS = "token_mail.json"
 
-def send_email( to_addresses, from_address, subject, body ):
+def send_email( to_addresses, from_address, subject, body, is_html=False ):
   creds = None
   if os.path.exists( TOKENS ):
     creds = Credentials.from_authorized_user_file( TOKENS, SCOPES )
@@ -31,11 +31,14 @@ def send_email( to_addresses, from_address, subject, body ):
     service = build("gmail", "v1", credentials=creds)
     message = EmailMessage()
 
-    message.set_content( body )
+    if is_html:
+      message.add_alternative( body, subtype="html" )
+    else:
+      message.set_content( body )
 
-    message["To"] = ', '.join( to_addresses )
-    message["From"] = from_address
-    message["Subject"] = subject
+    message[ "To" ] = ', '.join( to_addresses )
+    message[ "From" ] = from_address
+    message[ "Subject" ] = subject
 
     # encoded message
     encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
@@ -48,7 +51,7 @@ def send_email( to_addresses, from_address, subject, body ):
         .send(userId="me", body=create_message)
         .execute()
     )
-    print(f'Message Id: {send_message["id"]}')
+    print(f'Message Id: {send_message[ "id" ]}')
   except HttpError as error:
     print(f"An error occurred: {error}")
     send_message = None
