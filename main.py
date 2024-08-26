@@ -1,5 +1,6 @@
 import configparser
 from datetime import datetime, timezone, timedelta
+import pandas as pd
 
 import DatabaseLib as DB
 import EmailLib as Email
@@ -13,7 +14,7 @@ CORRECT_GD_PTS = 1
 CORRECT_OUTCOME_PTS = 1
 CORRECT_SCORE_PTS = 2
 FROM_EMAIL = config[ "email" ][ "from_address" ]
-TIME_HORIZON = 96
+TIME_HORIZON = 72
 
 class FormError( Exception ):
     pass
@@ -64,8 +65,6 @@ def complete_gameweek( gw ):
     for r in results:
         row = {
             "fixture_id":   r[ "id" ],
-            # "team_h_score": 1,
-            # "team_a_score": 0,
             "team_h_score": r[ "team_h_score" ],
             "team_a_score": r[ "team_a_score" ],
         }
@@ -125,6 +124,9 @@ def process_responses( gw ):
     fixtures = DB.read_query( query )
     prediction_data = []
     for user_id in predictions:
+        if predictions[ user_id ][ "submission_time" ] is None:
+            # The user did not submit their predictions.
+            continue
         for fixture in fixtures:
             h_q_id = next(
                 ( k for k, v in questions.items() if v.split( '(')[ 1 ][ :-1 ] \
@@ -281,10 +283,49 @@ def get_form( gw, deadline, fixtures ):
     DB.write_insert( 'form', form_data )
     return form_id, responder_uri
 
-def draft_email( gw, deadline, responder_uri, gameweek_score_data,
+def summarize_results( gw, users, teams, result_data, prediction_data,
+                       gameweek_score_data ):
+    if len( users ) == 0:
+        raise EmailError( ( f"No users registered for predictions league" ) )
+    query = f"SELECT * FROM fixture WHERE gw={ gw }"
+    fixtures = DB.read_query(query)
+    users_dict = { u[ "id" ]: u[ "first_name" ] for u in users }
+    fixtures_dict = { f[ "id" ]: \
+                        f"{ teams[ f[ "team_h" ] ] }-{ teams[ f[ "team_a" ] ] }"
+                      for f in fixtures }
+    results_dict = { r[ "fixture_id" ]: \
+                        f"{ r[ "team_h_score" ] }-{ r[ "team_a_score" ] }"
+                     for r in result_data }
+
+    summary = {
+        u[ "first_name" ]: {
+            fixtures_dict[ f[ "id" ] ]: ""
+            for f in fixtures
+        }
+        for u in users
+    }
+    assert len( users )==len( gameweek_score_data )
+    for gs in gameweek_score_data:
+        summary[ users_dict[ gs[ "user_id" ] ] ][ "Total Points" ] = \
+            gs[ "total_points" ]
+    summary[ "Result" ] = {
+        fixtures_dict[ f[ "id" ] ]: results_dict[ f[ "id" ] ]
+        for f in fixtures
+    }
+    summary[ "Result" ][ "Total Points" ] = ""
+    for p in prediction_data:
+        first_name = users_dict[ p[ "user_id" ] ]
+        fixture_title = fixtures_dict[ p[ "fixture_id" ] ]
+        assert first_name in summary
+        assert fixture_title in summary[ first_name ]
+        summary[ first_name ][ fixture_title ] = \
+            f"{ p[ "team_h_pred" ] }-{ p[ "team_a_pred" ] }"
+
+    results_summary = pd.DataFrame( summary )
+    return results_summary
+
+def draft_email( users, gw, deadline, responder_uri, results_summary,
                  leaderboard_data ):
-    query = f"SELECT * FROM user;"
-    users = DB.read_query(query)
     if len( users ) == 0:
         raise EmailError( ( f"No users registered for predictions league" ) )
 
@@ -299,37 +340,32 @@ def draft_email( gw, deadline, responder_uri, gameweek_score_data,
         "Good luck!"
     )
 
-    if gameweek_score_data and leaderboard_data:
+    if results_summary is not None:
+        body += str(
+            "\n\n"
+            f"GW { gw } Predictions:\n"
+            f"{ results_summary.to_string(index=False) }"
+        )
+
+    if leaderboard_data:
         user_first_names = {
             u[ "id" ]: u[ "first_name" ]
             for u in users
         }
-        gameweek_score_data.sort( key = lambda x: x[ "user_id" ] )
-        gw_results = ""
-        for gs in gameweek_score_data:
-            user_score = str(
-                f"\t| { user_first_names[ gs[ "user_id" ] ] }\t\t\t"
-                f"\t| { gs[ "total_points" ] } pts"
-            )
-            if gs[ "missed_gw" ]:
-                user_score += f" (did not submit predictions)"
-            gw_results += user_score + "\n"
-        leaderboard_data.sort( key = lambda x: x[ "total_points" ], reverse=True )
+        leaderboard_data.sort( key = lambda x: x[ "total_points" ],
+                               reverse=True )
         leaderboard = ""
         position = 0
         for lr in leaderboard_data:
             position += 1
             user_position = str(
-                f"\t| { position }."
-                f"\t| { user_first_names[ lr[ "user_id" ] ] }\t\t\t"
-                f"\t| { lr[ "total_points" ] } pts"
+                f"\t{ position }. "
+                f"{ user_first_names[ lr[ "user_id" ] ] } "
+                f"- { lr[ "total_points" ] } pts"
             )
             leaderboard += user_position + "\n"
         body += str(
             "\n\n"
-            f"GW { gw - 1 } results:\n"
-            f"{ gw_results }"
-            "\n"
             f"Points table after GW { gw - 1 }:\n"
             f"{ leaderboard }"
         )
@@ -339,7 +375,12 @@ if __name__ == "__main__":
 
     gw, deadline, fixtures = new_gameweek()
 
-    gameweek_score_data, leaderboard_data = None, None
+    query = f"SELECT * FROM user;"
+    users = DB.read_query(query)
+    query = f"SELECT * FROM team;"
+    teams = { t[ "id" ]: t[ "name" ] for t in DB.read_query(query) }
+    prediction_data, gameweek_score_data, leaderboard_data, results_summary = \
+        None, None, None, None
 
     if gw > 1:
         result_data = complete_gameweek( gw-1 )
@@ -347,6 +388,9 @@ if __name__ == "__main__":
         gameweek_score_data = score_responses( gw-1, result_data,
                                                prediction_data )
         leaderboard_data = update_leaderboard( gw-1, gameweek_score_data )
+        results_summary = summarize_results( gw-1, users, teams, result_data,
+                                             prediction_data,
+                                             gameweek_score_data )
 
     gameweek_data = [ {
         "id":               gw,
@@ -359,6 +403,6 @@ if __name__ == "__main__":
     print( f"\nPrediction Form: { responder_uri }\n" )
 
     to_addresses, from_address, subject, body = \
-        draft_email( gw, deadline, responder_uri, gameweek_score_data,
+        draft_email( users, gw, deadline, responder_uri, results_summary,
                      leaderboard_data )
     Email.send_email( to_addresses, from_address, subject, body )
